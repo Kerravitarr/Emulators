@@ -1,0 +1,4 @@
+numFileUKTRC = C:\Users\Terran\Documents\Imsat\Задания\UKTRC\Логи\UKTRCdr_n33_10_2.txt
+MPABPortName = COM11
+LastPort = COM18
+LastPortSecond = COM11
