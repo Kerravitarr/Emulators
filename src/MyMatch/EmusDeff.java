@@ -4,23 +4,34 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FontMetrics;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedHashSet;
+import javax.swing.Timer;
 import java.util.TimerTask;
 import java.util.Vector;
 
 import javax.swing.JOptionPane;
 import javax.swing.JRadioButtonMenuItem;
 
-import MyMatch.EmusDeff.Controller;
-import jssc.SerialPort;
+/*import jssc.SerialPort;
 import jssc.SerialPortException;
 import jssc.SerialPortList;
-import jssc.SerialPortTimeoutException;
+import jssc.SerialPortTimeoutException;*/
+
+import com.fazecast.jSerialComm.SerialPort;
+import com.fazecast.jSerialComm.SerialPortDataListener;
+import com.fazecast.jSerialComm.SerialPortEvent;
+import com.fazecast.jSerialComm.SerialPortPacketListener;
+
+
+import java.util.concurrent.locks.LockSupport;
+
+
 
 public abstract class EmusDeff extends javax.swing.JFrame {
 
@@ -146,8 +157,13 @@ public abstract class EmusDeff extends javax.swing.JFrame {
 
 				setTitle(Name);
 
-				String[] portNames1 = SerialPortList.getPortNames();
+				Vector<String> ports2 = new Vector<>();
+				for(SerialPort sp : SerialPort.getCommPorts()) {
+					ports2.add(sp.getSystemPortName());
+				}
+				String[] portNames1 = ports2.toArray(new String[ports2.size()]);
 				String[] portNames2 = {};
+				
 
 				try {
 					portNames2 = Se.getStringMs("PortList");
@@ -185,7 +201,7 @@ public abstract class EmusDeff extends javax.swing.JFrame {
 				init();
 			}
 
-		}, 1000);
+		}, 10);
 	}
 	/**
 	 * Добавляет контроллеры на лист
@@ -224,24 +240,83 @@ public abstract class EmusDeff extends javax.swing.JFrame {
 		isStop = true;
 		try {
 			serialPortMinor.closePort();
-		} catch (SerialPortException ex) {
-			print(ex.toString());
+		} catch (Exception ex) {
+			print("Ошибка закрытия порта" + ex.toString());
 		}
 	}
 
 	protected abstract Controller getController(int numContr, int numPart);
-
+	
+	//Именно тут выставляется таймаут компорта
+	private class BufferIn implements ActionListener{
+		Timer timer = new Timer(15, this);
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			timer.stop();
+			if(lenght == 0) return;
+			
+			String data = "";
+			StringBuilder sb = new StringBuilder();
+			
+			for(int i = 0 ; i < lenght ; i++) {
+				data += (char) msg[i];
+				sb.append(String.format("%02X ", msg[i]));
+			}
+			
+			lenght = 0;
+			
+			dispatchEvent(
+					new EmusEvent(data, EmusEvent.Type.COM_IN_S));
+			dispatchEvent(new EmusEvent(sb.toString(),
+					EmusEvent.Type.COM_IN_X));
+			msgIn(data, sb.toString());
+		}
+		public void add(byte[] bytes) {
+			if(!timer.isRunning()) LockSupport.parkNanos(1000);
+			timer.restart();
+			
+			if (msg.length <= lenght + bytes.length) {
+				byte localM[] = new byte[lenght + bytes.length + 10];
+				System.arraycopy(msg, 0, localM, 0, msg.length);
+				msg = localM;
+			}
+			
+			for(int i = 0 ; i < bytes.length; i++) {
+				msg[lenght++] = bytes[i];
+			}
+		}
+		
+		byte[] msg = new byte[0];
+		int lenght = 0;
+		
+	}
+	BufferIn buffer = new BufferIn();
+	
 	final private void init() {
-		serialPortMinor = new SerialPort(portName);
+		serialPortMinor = SerialPort.getCommPort(portName);//new SerialPort(portName);
 		try {
 			// Открываем порт
 			serialPortMinor.openPort();
 			// Выставляем параметры
-			serialPortMinor.setParams(SerialPort.BAUDRATE_9600,
+			/*serialPortMinor.setParams(SerialPort.BAUDRATE_9600,
 					SerialPort.DATABITS_8, SerialPort.STOPBITS_1,
-					SerialPort.PARITY_NONE);
-			// Устанавливаем ивент лисенер и маску
-			serialPortMinor.addEventListener(event -> {
+					SerialPort.PARITY_NONE);*/
+			// Устанавливаем ивент лисенер и маску			
+			serialPortMinor.addDataListener(new SerialPortDataListener() {
+				@Override
+				public int getListeningEvents() {return SerialPort.LISTENING_EVENT_DATA_AVAILABLE;}
+
+				@Override
+				public void serialEvent(SerialPortEvent event) {
+					if (event.getEventType() != SerialPort.LISTENING_EVENT_DATA_AVAILABLE)
+				         return;
+					byte[] newData = new byte[serialPortMinor.bytesAvailable()];
+					serialPortMinor.readBytes(newData, newData.length);
+					buffer.add(newData);
+				}
+			});
+			
+			/*serialPortMinor.addEventListener(event -> {
 				try {
 					if (event.isRXCHAR() && event.getEventValue() > 0) {
 						String data = "";
@@ -271,7 +346,7 @@ public abstract class EmusDeff extends javax.swing.JFrame {
 				} catch (Exception ex5) {
 					println("Возникла ошибка при приёме сообщения, не критично -> " + ex5.toString());
 				}
-			}, SerialPort.MASK_RXCHAR);
+			});*/
 		} catch (Exception ex) {
 			println("Возникла ошибка открытия порта, критично -> " + ex.toString());
 		}
@@ -690,7 +765,7 @@ public abstract class EmusDeff extends javax.swing.JFrame {
 	final public boolean writeBytes(byte[] buffer) {return writeBytes(buffer,true);}
 	final public boolean writeBytes(byte[] buffer, boolean isPrint) {
 		try {
-			if (serialPortMinor.writeBytes(buffer)) {
+			if (serialPortMinor.writeBytes(buffer,buffer.length) != -1) {
 				String data = "";
 				for (byte element : buffer) {
 					data += " " + String.format("%02X ", element);
@@ -709,8 +784,8 @@ public abstract class EmusDeff extends javax.swing.JFrame {
 		try {
 			if (isPrint)
 				println("Out -> " + string);
-
-			return serialPortMinor.writeString(string);
+			
+			return writeBytes(string.getBytes(),isPrint);
 		} catch (Exception ex) {
 			println("Возникла ошибка -> " + ex.toString());
 			return false;

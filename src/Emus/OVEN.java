@@ -8,6 +8,18 @@ import MyMatch.Setings;
 
 public class OVEN extends EmusDeff {
 	
+	private class Controller extends EmusDeff.Controller{
+
+		public Controller() {
+			super(1, "Шкаф ОВЕН");
+		}
+
+		protected String getStrToBoard() {
+			return null;
+		}
+		
+	}
+	
 	public OVEN(Setings se) {
 		super(se, "Эмулятор шкафов ОВЕН", 5000);
 		//addContr(1, 1, 1, 8);
