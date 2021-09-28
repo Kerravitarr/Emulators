@@ -9,7 +9,7 @@ import MyMatch.Setings;
 public class ATIS extends EmusDeff {
 	
 	public ATIS(Setings se) {
-		super(se, "Эмулятор чего то там, названного АТИС", 5000);
+		super(se, "Эмулятор СКДП - системы контроля допуска в помещения", 5000);
 		//addContr(1, 1, 1, 8);
 	}
 

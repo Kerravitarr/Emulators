@@ -3,6 +3,7 @@ package MyMatch;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FontMetrics;
+import java.awt.Graphics;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
@@ -15,6 +16,8 @@ import javax.swing.Timer;
 import java.util.TimerTask;
 import java.util.Vector;
 
+import javax.swing.DefaultListModel;
+import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JRadioButtonMenuItem;
 
@@ -28,7 +31,6 @@ import com.fazecast.jSerialComm.SerialPortDataListener;
 import com.fazecast.jSerialComm.SerialPortEvent;
 import com.fazecast.jSerialComm.SerialPortPacketListener;
 
-
 import java.util.concurrent.locks.LockSupport;
 
 
@@ -41,6 +43,11 @@ public abstract class EmusDeff extends javax.swing.JFrame {
 		protected int seed;
 		protected String Name;
 
+		/**
+		 * Описывает любой контроллер устройства
+		 * @param DelSeed То, в каких пределах может изменяться сид - начальное зерно генерации
+		 * @param name - Имя датчика
+		 */
 		public Controller(int DelSeed, String name) {
 			val = 0;
 			mode = Mode.STEP;
@@ -82,7 +89,7 @@ public abstract class EmusDeff extends javax.swing.JFrame {
 			val = value;
 		}
 
-		final public void step() {
+		public void step() {
 			if (mode == Mode.RND) {
 				val = (int) (Math.random() * Integer.MAX_VALUE);
 			} else if (mode == Mode.STEP) {
@@ -95,6 +102,39 @@ public abstract class EmusDeff extends javax.swing.JFrame {
 
 	protected static enum Mode {
 		RND, STEP, UNDEFENDED, NULL, RESTART, CONST
+	}
+	
+	
+	protected class FastList extends JList<String>{
+	    private static DefaultListModel<String> items = new DefaultListModel<String>();
+	    public FastList() {
+	    	super(items);
+	    }
+	    
+	    public void add(String val) {
+	    	items.addElement(val);
+	    }
+	    
+	    public void update(String val, int index) {
+			try {
+				items.set(index, val);
+			} catch (ArrayIndexOutOfBoundsException e) {
+				items.add(index, val);
+			}
+	    }
+	    
+	    public String[] getItems() {
+	    	String[] myArray = new String[items.getSize()];
+			for (int i = 0; i < items.getSize(); i++) {
+				myArray[i] = String.valueOf(items.getElementAt(i));
+			}
+	        return myArray;
+	    }
+	    
+	    public void regenerate(int maxIndex) {
+	    	while(items.getSize() > maxIndex)
+	    		items.remove(items.getSize()-1);
+	    }
 	}
 
 	/**
@@ -111,7 +151,8 @@ public abstract class EmusDeff extends javax.swing.JFrame {
 	private javax.swing.JMenu MenuPort;
 
 	protected javax.swing.JMenuBar MenuRaw;
-	protected java.awt.List TextList;
+	/** Непосредственно область, в которой происходит отображение всех устрйоств */
+	protected FastList TextList;
 
 	protected Setings Se;
 	private String Name;
@@ -123,7 +164,8 @@ public abstract class EmusDeff extends javax.swing.JFrame {
 
 	protected int numKontr = 0;
 	protected int startContr = 1;
-	private int numContrInDev = 1;
+	/** Число контроллеров в одном устройстве */
+	protected int numContrInDev = 1;
 	private int contrPerLine = 1;
 
 	private javax.swing.JMenuItem setModeContrSetZeroAll;
@@ -205,14 +247,14 @@ public abstract class EmusDeff extends javax.swing.JFrame {
 	}
 	/**
 	 * Добавляет контроллеры на лист
-	 * @param numContr - число контроллеров
+	 * @param numDev - число девайсов, состоящих из контроллеров
 	 * @param startContr - адрес первого контроллера
 	 * @param contrPerDev - Сколько контроллеров содержится в одном девайсе (у них один адрес)
 	 * @param contrPerLine - Сколько контроллеров расположить на линии
 	 */
-	final protected void addContr(int numContr, int startContr, int contrPerDev,
+	final protected void addContr(int numDev, int startContr, int contrPerDev,
 			int contrPerLine) {
-		numKontr = numContr;
+		numKontr = numDev;
 		numContrInDev = contrPerDev;
 		this.contrPerLine = contrPerLine;
 		this.startContr = startContr;
@@ -244,8 +286,6 @@ public abstract class EmusDeff extends javax.swing.JFrame {
 			print("Ошибка закрытия порта" + ex.toString());
 		}
 	}
-
-	protected abstract Controller getController(int numContr, int numPart);
 	
 	//Именно тут выставляется таймаут компорта
 	private class BufferIn implements ActionListener{
@@ -297,11 +337,6 @@ public abstract class EmusDeff extends javax.swing.JFrame {
 		try {
 			// Открываем порт
 			serialPortMinor.openPort();
-			// Выставляем параметры
-			/*serialPortMinor.setParams(SerialPort.BAUDRATE_9600,
-					SerialPort.DATABITS_8, SerialPort.STOPBITS_1,
-					SerialPort.PARITY_NONE);*/
-			// Устанавливаем ивент лисенер и маску			
 			serialPortMinor.addDataListener(new SerialPortDataListener() {
 				@Override
 				public int getListeningEvents() {return SerialPort.LISTENING_EVENT_DATA_AVAILABLE;}
@@ -315,38 +350,6 @@ public abstract class EmusDeff extends javax.swing.JFrame {
 					buffer.add(newData);
 				}
 			});
-			
-			/*serialPortMinor.addEventListener(event -> {
-				try {
-					if (event.isRXCHAR() && event.getEventValue() > 0) {
-						String data = "";
-						StringBuilder sb = new StringBuilder();
-						try {
-							// Получаем ответ от устройства, обрабатываем данные
-							// и т.д.
-							while (true) {
-								byte[] bt = serialPortMinor
-										.readBytes(event.getEventValue(), 15);
-								for (byte b : bt) {
-									data += (char) b;
-									sb.append(String.format("%02X ", b));
-								}
-							}
-						} catch (SerialPortException ex1) {
-							println("упс - " + ex1.toString());
-						} catch (SerialPortTimeoutException ex2) {
-							// println(ex.toString());
-						}
-						dispatchEvent(
-								new EmusEvent(data, EmusEvent.Type.COM_IN_S));
-						dispatchEvent(new EmusEvent(sb.toString(),
-								EmusEvent.Type.COM_IN_X));
-						msgIn(data, sb.toString());
-					}
-				} catch (Exception ex5) {
-					println("Возникла ошибка при приёме сообщения, не критично -> " + ex5.toString());
-				}
-			});*/
 		} catch (Exception ex) {
 			println("Возникла ошибка открытия порта, критично -> " + ex.toString());
 		}
@@ -361,7 +364,7 @@ public abstract class EmusDeff extends javax.swing.JFrame {
 	// Code">//GEN-BEGIN:initComponents
 	final private void initComponents() {
 
-		TextList = new java.awt.List();
+		TextList = new FastList();
 		MenuRaw = new javax.swing.JMenuBar();
 		Menu = new javax.swing.JMenu();
 		MenuPort = new javax.swing.JMenu();
@@ -496,7 +499,7 @@ public abstract class EmusDeff extends javax.swing.JFrame {
 
 	private void jMenuCountDevPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_jMenuItem2ActionPerformed
 		String res = JOptionPane.showInputDialog(this,
-				"Введите число драйверов");
+				"Введите число контроллеров у каждого драйвера");
 		if (res == null) {
 			return;
 		}
@@ -603,6 +606,16 @@ public abstract class EmusDeff extends javax.swing.JFrame {
 		println("");
 	}
 
+
+
+	/**
+	 * Функцию должен реализовать каждый, уважающий себя драйвер
+	 * @param numContr - Порядковый нормер устройства ((состоящего из группы контроллеров))
+	 * @param numPart - Порядковый номер контроллера в устройстве
+	 * @return
+	 */
+	protected abstract Controller getController(int numContr, int numPart);
+	
 	final private void regenerateController() {
 		deviseVector.removeAllElements();
 		for (int i = 0; i < numKontr; i++) {
@@ -615,7 +628,7 @@ public abstract class EmusDeff extends javax.swing.JFrame {
 	}
 
 	final private void regenerateControllerString() {
-		TextList.removeAll();
+		int index = 0;
 		for (int i = 0; i < numKontr; i++) {
 			String num = toStrWithZero(i + startContr, 2);
 			Controller[] dataDriv = deviseVector.get(i);
@@ -627,7 +640,7 @@ public abstract class EmusDeff extends javax.swing.JFrame {
 			_name += ".__";
 			for (int j = 0; j < dataDriv.length; j++) {
 				if (j % contrPerLine == 0 && j > 0) {
-					TextList.add(name);
+					TextList.update(_name, index++);
 					name = _name;
 				}
 				if (dataDriv.length == 1) {
@@ -640,8 +653,10 @@ public abstract class EmusDeff extends javax.swing.JFrame {
 				}
 				name += num + "=" + dataDriv[j].getStrToBoard();
 			}
-			TextList.add(name);
+			TextList.update(name, index++);
 		}
+		TextList.regenerate(index);
+		repaint();
 	}
 
 	final protected void regenerateControllerValue() {
@@ -680,7 +695,6 @@ public abstract class EmusDeff extends javax.swing.JFrame {
 					return;
 				}
 				isBlok = true;
-				TextList.removeAll();
 				newStep();
 				regenerateControllerString();
 
@@ -698,10 +712,15 @@ public abstract class EmusDeff extends javax.swing.JFrame {
 					FontMetrics fm = img.getGraphics()
 							.getFontMetrics(TextList.getFont());
 					width = fm.stringWidth(max);
-					height = list.length * 15;
+					height = list.length * 20;
 				}
 				d.height = height + 70;
 				d.width = width + 30;
+				
+				if(d.width < 200)
+					d.width = 200;
+				if(d.width > java.awt.Toolkit.getDefaultToolkit().getScreenSize().width)
+					d.width = java.awt.Toolkit.getDefaultToolkit().getScreenSize().width;
 				setSize(d);
 
 				if (isStop) {

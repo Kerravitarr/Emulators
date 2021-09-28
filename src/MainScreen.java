@@ -35,6 +35,7 @@ import Emus.IMSI;
 import Emus.INC;
 import Emus.ISI;
 import Emus.MPAB;
+import Emus.MPC_EL;
 import Emus.MPC_MZ_F;
 import Emus.ORION;
 import Emus.OVEN;
@@ -274,74 +275,23 @@ public class MainScreen extends javax.swing.JFrame implements EmusListener {
 
 		int i = 0;
 
-		jMenuDriver.get(i).setText("VRT");
-		jMenuDriver.get(i).addActionListener(evt -> jMenuActionPerformed(evt));
-		jMenu1.add(jMenuDriver.get(i));
-		i++;
-
-		jMenuDriver.get(i).setText("ОРИОН");
-		jMenuDriver.get(i).addActionListener(evt -> jMenuActionPerformed(evt));
-		jMenu1.add(jMenuDriver.get(i));
-		i++;
-
-		jMenuDriver.get(i).setText("МПАБ");
-		jMenuDriver.get(i).addActionListener(evt -> jMenuActionPerformed(evt));
-		jMenu1.add(jMenuDriver.get(i));
-		i++;
-
-		jMenuDriver.get(i).setText("ИНС");
-		jMenuDriver.get(i).addActionListener(evt -> jMenuActionPerformed(evt));
-		jMenu1.add(jMenuDriver.get(i));
-		i++;
-
-		jMenuDriver.get(i).setText("БАРС");
-		jMenuDriver.get(i).addActionListener(evt -> jMenuActionPerformed(evt));
-		jMenu1.add(jMenuDriver.get(i));
-		i++;
-
-		jMenuDriver.get(i).setText("I2C");
-		jMenuDriver.get(i).addActionListener(evt -> jMenuActionPerformed(evt));
-		jMenu1.add(jMenuDriver.get(i));
-		i++;
-
-		jMenuDriver.get(i).setText("БИСИ");
-		jMenuDriver.get(i).addActionListener(evt -> jMenuActionPerformed(evt));
-		jMenu1.add(jMenuDriver.get(i));
-		i++;
-
-		jMenuDriver.get(i).setText("ИСИ");
-		jMenuDriver.get(i).addActionListener(evt -> jMenuActionPerformed(evt));
-		jMenu1.add(jMenuDriver.get(i));
-		i++;
-
-		jMenuDriver.get(i).setText("МПЦ МЗ Ф");
-		jMenuDriver.get(i).addActionListener(evt -> jMenuActionPerformed(evt));
-		jMenu1.add(jMenuDriver.get(i));
-		i++;
-
-		jMenuDriver.get(i).setText("Эмулятор УКТРЦ");
-		jMenuDriver.get(i).addActionListener(evt -> jMenuActionPerformed(evt));
-		jMenu3.add(jMenuDriver.get(i));
-		i++;
-
-		jMenuDriver.get(i).setText("Эмулятор PowerWizard");
-		jMenuDriver.get(i).addActionListener(evt -> jMenuActionPerformed(evt));
-		jMenu1.add(jMenuDriver.get(i));
-		i++;
-
-		jMenuDriver.get(i).setText("Сквозной канал");
-		jMenuDriver.get(i).addActionListener(evt -> jMenuActionPerformed(evt));
-		jMenu1.add(jMenuDriver.get(i));
-		i++;
-
-		jMenuDriver.get(i).setText("ИМСИ");
-		jMenuDriver.get(i).addActionListener(evt -> jMenuActionPerformed(evt));
-		jMenu1.add(jMenuDriver.get(i));
-		i++;
-
+		newEmulator(i++,"VRT");
+		newEmulator(i++,"ОРИОН");
+		newEmulator(i++,"МПАБ");
+		newEmulator(i++,"ИНС");
+		newEmulator(i++,"БАРС");
+		newEmulator(i++,"I2C");
+		newEmulator(i++,"БИСИ");
+		newEmulator(i++,"ИСИ");
+		newEmulator(i++,"МПЦ МЗ Ф");
+		newEmulator(i++,"Эмулятор УКТРЦ");
+		newEmulator(i++,"Эмулятор PowerWizard");
+		newEmulator(i++,"Сквозной канал");
+		newEmulator(i++,"ИМСИ");
 		newEmulator(i++,"ОВЕН");
 		newEmulator(i++,"БСВУ");
-		newEmulator(i++,"АТИС?!");
+		//newEmulator(i++,"СКДП"); - Удалён, так как у них есть свой эмулятор
+		newEmulator(i++,"МПЦ ЭЛ");
 		
 		jMenuBar1.add(jMenu1);
 
@@ -364,30 +314,21 @@ public class MainScreen extends javax.swing.JFrame implements EmusListener {
 		layout.setVerticalGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING).addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 369, Short.MAX_VALUE));
 
 		pack();
+		
 	}// </editor-fold>
 	
 	
 	private void newEmulator(int num, String name) {
 		jMenuDriver.get(num).setText(name);
-		jMenuDriver.get(num).addActionListener(evt -> jMenuActionPerformed(evt,name));
+		jMenuDriver.get(num).addActionListener(e -> jMenuActionPerformed(name));
 		jMenu1.add(jMenuDriver.get(num));
 	}
-
-	private void jCheckBoxMenuItem1ActionPerformed(java.awt.event.ActionEvent evt) {
-		jTextArea1.setAutoscrolls(jCheckBoxMenuItem1.isSelected());
-	}
-
-	private void jMenu4MouseClicked(java.awt.event.MouseEvent evt) {
-		jMenuItem2ActionPerformed(null);
-		jMenu4.setSelected(false);
-	}
-
-
-	private void jMenuActionPerformed(ActionEvent evt, String name) {
+	private void jMenuActionPerformed(String name) {
 		java.awt.EventQueue.invokeLater(() -> {
 			if (!driverWindow_hash.containsKey(name)) {
 				switch (name) {
-				case "АТИС?!" -> driverWindow_hash.put(name, new ATIS(Se));
+				case "МПЦ ЭЛ" -> driverWindow_hash.put(name, new MPC_EL(Se));
+				case "СКДП" -> driverWindow_hash.put(name, new ATIS(Se));
 				case "БСВУ" -> driverWindow_hash.put(name, new BSVU(Se));
 				case "ОВЕН" -> driverWindow_hash.put(name, new OVEN(Se));
 				case "ИМСИ" -> driverWindow_hash.put(name, new IMSI(Se));
@@ -409,6 +350,17 @@ public class MainScreen extends javax.swing.JFrame implements EmusListener {
 			}
 			driverWindow_hash.get(name).setVisible(true);
 		});
+	}
+	
+
+
+	private void jCheckBoxMenuItem1ActionPerformed(java.awt.event.ActionEvent evt) {
+		jTextArea1.setAutoscrolls(jCheckBoxMenuItem1.isSelected());
+	}
+
+	private void jMenu4MouseClicked(java.awt.event.MouseEvent evt) {
+		jMenuItem2ActionPerformed(null);
+		jMenu4.setSelected(false);
 	}
 	
 	private void jMenuActionPerformed(java.awt.event.ActionEvent evt) {

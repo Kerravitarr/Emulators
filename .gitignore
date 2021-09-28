@@ -3,3 +3,6 @@
 .project
 *.prefs
 *.class
+/bin/
+ConfigIliaProg.txt
+LogOutAllProg.txt
