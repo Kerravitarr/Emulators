@@ -1,84 +1,202 @@
 package Emus;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.nodes.Node;
+import org.jsoup.nodes.TextNode;
+
 import MyMatch.EmusDeff;
+import MyMatch.EmusEvent;
 import MyMatch.MyMatch;
 import MyMatch.Setings;
 
 public class MPC_EL extends EmusDeff {
 	
-	private abstract class Detector extends Controller {
-		protected int StartBit;
-	    protected int Del;
-
-	    Detector(int StaBit, int StoBit, int Sd, String name) {
-	    	super(Sd, name);
-	    	StartBit = StaBit;
-	        Del = StoBit - StartBit + 1;
-	        val = 0;
-	    }
-
-	    public String toMPC() {
-	        String out = "";
-	        for (int i = 0; i < Del; i++) {
-	            if (((val & (1 << i)) == (long) 0)) {
-	                out += "0";
-	            } else {
-	                out += "1";
-	            }
-	        }
-	        return out += "";
-	    }
-	}
-	
-	private class DetectorA extends Detector {
-
-	    public DetectorA(int StaBit, int Sd) {
-	        super(StaBit, StaBit + 10, Sd, "A" + (StaBit + 1));
-	    }
+	/**
+	 * Эта фигня нужна чтобы парсить HTML
+	 * @author rjhjk
+	 *
+	 */
+	private class ObjectInHTML extends Controller{
+		int id;
+		String Name;
+		String Type;
+		int bitStart;
+		int bitStop;
+		
+		/**Число битов на датчик */
+		int Del;
+		
+		ObjectInText typeNode = null;
+		
+		ObjectInHTML(Node id, Node Name,Node Type,Node bitStart,Node bitStop){
+	    	super(0, id+"");
+			String id_ = id.childNodes().get(0).toString().replaceAll("\n", "").replaceAll(" ", "");
+			this.id = Integer.parseInt(id_);
+			this.Name = Name.childNodes().get(0).toString().replaceAll("\n", "").replaceAll(" ", "");
+			this.Type = Type.childNodes().get(0).toString().replaceAll("\n", "").replaceAll(" ", "");
+			String bitStart_ = bitStart.childNodes().get(0).toString().replaceAll("\n", "").replaceAll(" ", "");
+			this.bitStart = Integer.parseInt(bitStart_);
+			String bitStop_ = bitStop.childNodes().get(0).toString().replaceAll("\n", "").replaceAll(" ", "");
+			this.bitStop = Integer.parseInt(bitStop_);
+			Del = this.bitStop - this.bitStart + 1;
+			seed = (int) (Math.random() * Del/2);// - DelSeed / 2;
+			super.Name = this.Name;
+		}
+		
+		public String toMPC() {
+			String out = "";
+			if (typeNode == null) {
+				for (int i = 0; i < Del; i++) {
+					if (((val & (1 << i)) == (long) 0)) {
+						out += "0";
+					} else {
+						out += "1";
+					}
+				}
+			} else {
+				int del = typeNode.countD;
+				for (int i = 0; i < del; i++) {
+					if (((val & (1 << i)) == (long) 0)) {
+						out += "0";
+					} else {
+						out += "1";
+					}
+				}
+				for(Integer countA : typeNode.countA) {
+					for (int i = 0; i < countA; i++) {
+						if (((val & (1 << i)) == (long) 0)) {
+							out += "0";
+						} else {
+							out += "1";
+						}
+					}
+				}
+			}
+			return out;
+		}
 	    
 	    public String getStrToBoard() {
-	        int num = StartBit + 1;
-	        long val = super.val & 0x7FF;
-	        if (num > 16384) {
-	            num -= 16384;
-	            return "а" + num + " = " + toBeautifulStr(val, 4);
-	        } else {
-	            return "А" + num + " = " + toBeautifulStr(val, 4);
-	        }
+	    	if(typeNode == null) {
+		        String val = toMPC();
+	            return "Ц" + id + " = " + val;
+	    	} else {
+	    		String ret = "A" + id + " = ";
+	    		ret += "ц:";
+				int del = typeNode.countD;
+				for (int i = 0; i < del; i++) {
+					if (((val & (1 << i)) == (long) 0)) {
+						ret += "0";
+					} else {
+						ret += "1";
+					}
+				}
+				del = 0;
+				for(Integer countA : typeNode.countA) {
+					ret += " a"+(del++)+":";
+					int mask = (1 << countA) - 1;
+					ret += toBeautifulStr((val&mask),(int) Math.ceil(Math.log10(mask)));
+				}
+				return ret;
+	    	}
 	    }
+		
+		public String toString() {
+			return "N" + id + " Имя " + Name + " Тип " + Type + " бит начала " +bitStart + " бит конца " + bitStop;
+		}
 	}
 	
-	private class DetectorD extends Detector {
-
-	    public DetectorD(int StaBit, int Sd) {
-	        super(StaBit, StaBit + 9, Sd, "D" + (StaBit+1));
-	    }
-
-	    public String getStrToBoard() {
-	        int num = StartBit + 1;
-	        String val = "";
-	        /*if (seed == 0) {
-	            val = Integer.toHexString((int) this.val) + "";
-	        } else {
-	            val = toMPC();
-	        }*/
-            val = toMPC();
-	        if (num > 16384) {
-	            num -= 16384;
-	            return "ц" + num + " = " + val;
-	        } else {
-	            return "Ц" + num + " = " + val;
-	        }
-	    }
+	/**
+	 * А вот тут уже объекты из текстового файла
+	 * @author rjhjk
+	 *
+	 */
+	private class ObjectInText{
+		String name;
+		int countD;
+		ArrayList<Integer> countA = new ArrayList<>();
+		
+		public String toString() {
+			String ret = "Объект " + name  + " дискретов " + countD;
+			for(int i = 0 ; i < countA.size() ; i++)
+				ret+= " А" + i + "=" + countA.get(i);
+			return ret;
+		}
 	}
-	
+	/**
+	 * Вектор всех объектов
+	 */
+	ArrayList<ObjectInHTML> objsH = new ArrayList<>();
 	public MPC_EL(Setings se) {
 		super(se, "Эмулятор МПЦ ЭЛ", 3000);
-		addContr(4, 1, 10, 10);
+		
+		ArrayList<ObjectInText> objsT = new ArrayList<>();
+		try {
+			File htmlFile = new File("MPC_EL_config.html");
+			Document doc = Jsoup.parse(htmlFile, "UTF-8");
+			printCild(doc.childNodes(),-4,objsH); //Cпускаемся по документу до 4 уровня
+		} catch (IOException e) {e.printStackTrace();}
+		
+		try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream("MPC_EL_config.txt"), "UTF-8"))) {
+			String line = reader.readLine();
+			String[] keyVal;
+			while (line != null) {
+				keyVal = line.split("\t");
+				ObjectInText obj = new ObjectInText();
+				obj.name = keyVal[0];
+				obj.countD = Integer.parseInt(keyVal[1]);
+				for(int i = 2 ; i < keyVal.length ; i++) {
+					obj.countA.add(Integer.parseInt(keyVal[i]));
+				}
+				objsT.add(obj);
+				System.out.println(obj);
+				line = reader.readLine();
+			}
+		} catch (Exception ex) {
+			dispatchEvent(new EmusEvent(ex.toString(), EmusEvent.Type.PRINTLN));
+		}
+		
+		for(ObjectInText i : objsT) {
+			for(ObjectInHTML h : objsH)
+				if(h.Type.equals(i.name))
+					h.typeNode = i;
+		}
+		
+		addContr(objsH.size(), 1, 1, 1);
+	}
+
+	private void printCild(List<Node> childNodes, int tab, ArrayList<ObjectInHTML> objs) {
+		if(childNodes == null) return;
+		if (tab < 0) {
+			for (Node i : childNodes) {
+				if (i instanceof Element)
+					printCild(i.childNodes(), tab + 1,objs);
+			}
+		} else {
+			boolean isFirst = true; //Пропускаем заголовок таблицы
+			for (Node i : childNodes) {
+				if (i instanceof TextNode) continue;
+				if(isFirst) {
+					isFirst = false;
+					continue;
+				}
+				List<Node> e = i.childNodes();
+				ObjectInHTML obj = new ObjectInHTML(e.get(1),e.get(3),e.get(5),e.get(7),e.get(9));
+				System.out.println(obj);
+				objs.add(obj);
+			}
+		}
 	}
 
 	@Override
@@ -86,12 +204,9 @@ public class MPC_EL extends EmusDeff {
 	}
 
 	@Override
-	protected Detector getController(int numContr, int numPart) {
-		int num = numContr*10 + numPart;
-		if (numContr < numKontr/2)
-			return new DetectorD(num*10-1, 2);
-		else
-			return new DetectorA(num - numKontr/2 * 10, 200);
+	protected ObjectInHTML getController(int numDev, int numContrInDev) {
+		ObjectInHTML obj = objsH.get(numDev);
+		return objsH.get(numDev);
 	}
 
 	//Ни чего не ожидаем принять
@@ -162,19 +277,24 @@ public class MPC_EL extends EmusDeff {
 		String blok = "";
 		// Забиваем данные
 		for (Controller[] contrs : deviseVector) {
-			for(Controller contr : contrs) {
-				Detector i = (Detector) contr;
-				if(contr instanceof DetectorD) sizeTC += i.Del;
-				data = i.toMPC();
-				do {
-					blok = data.substring(0, 1) + blok;
-					data = data.substring(1, data.length());
-					if (blok.length() == 8) {
-						msgbits += blok;
-						blok = "";
-					}
-				} while (data.length() > 0);
-				// msgbits += i.toMPC();
+			ObjectInHTML i = (ObjectInHTML) contrs[0];
+			if(i.typeNode == null) sizeTC += i.Del;
+			data = i.toMPC();
+			do {
+				blok = data.substring(0, 1) + blok;
+				data = data.substring(1, data.length());
+				if (blok.length() == 8) {
+					msgbits += blok;
+					blok = "";
+				}
+			} while (data.length() > 0);
+			// msgbits += i.toMPC();
+		}
+		while(!blok.isEmpty()) {
+			blok = blok + "0";
+			if (blok.length() == 8) {
+				msgbits += blok;
+				blok = "";
 			}
 		}
 		for (int n = 0; n < msgbits.length() - 8; n += 8) {

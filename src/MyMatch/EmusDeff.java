@@ -20,6 +20,7 @@ import javax.swing.DefaultListModel;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JRadioButtonMenuItem;
+import javax.swing.JScrollPane;
 
 /*import jssc.SerialPort;
 import jssc.SerialPortException;
@@ -365,6 +366,7 @@ public abstract class EmusDeff extends javax.swing.JFrame {
 	final private void initComponents() {
 
 		TextList = new FastList();
+		TextList.setAutoscrolls(true);
 		MenuRaw = new javax.swing.JMenuBar();
 		Menu = new javax.swing.JMenu();
 		MenuPort = new javax.swing.JMenu();
@@ -450,7 +452,7 @@ public abstract class EmusDeff extends javax.swing.JFrame {
 		setJMenuBar(MenuRaw);
 
 		newInitComponents();
-
+/*
 		javax.swing.GroupLayout layout = new javax.swing.GroupLayout(
 				getContentPane());
 		getContentPane().setLayout(layout);
@@ -461,8 +463,9 @@ public abstract class EmusDeff extends javax.swing.JFrame {
 		layout.setVerticalGroup(layout
 				.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
 				.addComponent(TextList, javax.swing.GroupLayout.DEFAULT_SIZE,
-						168, Short.MAX_VALUE));
+						168, Short.MAX_VALUE));*/
 
+		add(new JScrollPane(TextList));
 		pack();
 	}// </editor-fold>//GEN-END:initComponents
 
@@ -610,11 +613,11 @@ public abstract class EmusDeff extends javax.swing.JFrame {
 
 	/**
 	 * Функцию должен реализовать каждый, уважающий себя драйвер
-	 * @param numContr - Порядковый нормер устройства ((состоящего из группы контроллеров))
-	 * @param numPart - Порядковый номер контроллера в устройстве
+	 * @param numDev - Порядковый нормер девайса ((состоящего из группы контроллеров))
+	 * @param numContrInDev - Порядковый номер контроллера в устройстве
 	 * @return
 	 */
-	protected abstract Controller getController(int numContr, int numPart);
+	protected abstract Controller getController(int numDev, int numContrInDev);
 	
 	final private void regenerateController() {
 		deviseVector.removeAllElements();
@@ -721,6 +724,8 @@ public abstract class EmusDeff extends javax.swing.JFrame {
 					d.width = 200;
 				if(d.width > java.awt.Toolkit.getDefaultToolkit().getScreenSize().width)
 					d.width = java.awt.Toolkit.getDefaultToolkit().getScreenSize().width;
+				if(d.height > java.awt.Toolkit.getDefaultToolkit().getScreenSize().height)
+					d.height = java.awt.Toolkit.getDefaultToolkit().getScreenSize().height;
 				setSize(d);
 
 				if (isStop) {
