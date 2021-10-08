@@ -724,8 +724,8 @@ public abstract class EmusDeff extends javax.swing.JFrame {
 					d.width = 200;
 				if(d.width > java.awt.Toolkit.getDefaultToolkit().getScreenSize().width)
 					d.width = java.awt.Toolkit.getDefaultToolkit().getScreenSize().width;
-				if(d.height > java.awt.Toolkit.getDefaultToolkit().getScreenSize().height)
-					d.height = java.awt.Toolkit.getDefaultToolkit().getScreenSize().height;
+				if(d.height > java.awt.Toolkit.getDefaultToolkit().getScreenSize().height - 50)
+					d.height = java.awt.Toolkit.getDefaultToolkit().getScreenSize().height - 50;
 				setSize(d);
 
 				if (isStop) {
