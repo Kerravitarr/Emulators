@@ -161,6 +161,7 @@ public class MPC_EL extends EmusDeff {
 				}
 				objsT.add(obj);
 				System.out.println(obj);
+				dispatchEvent(new EmusEvent(obj.toString(), EmusEvent.Type.PRINTLN));
 				line = reader.readLine();
 			}
 		} catch (Exception ex) {
@@ -194,6 +195,7 @@ public class MPC_EL extends EmusDeff {
 				List<Node> e = i.childNodes();
 				ObjectInHTML obj = new ObjectInHTML(e.get(1),e.get(3),e.get(5),e.get(7),e.get(9));
 				System.out.println(obj);
+				dispatchEvent(new EmusEvent(obj.toString(), EmusEvent.Type.PRINTLN));
 				objs.add(obj);
 			}
 		}
@@ -311,6 +313,7 @@ public class MPC_EL extends EmusDeff {
 		msg += crc;
 
 		System.out.print("?B sizeTC(" + sizeTC + ") size(" + msgsize / 2 + ") crc(" + crc + ") -> ");
+		dispatchEvent(new EmusEvent("?B sizeTC(" + sizeTC + ") size(" + msgsize / 2 + ") crc(" + crc + ") -> ", EmusEvent.Type.PRINT));
 		msg = Hex2Ascii(sizeTC) + msg; // Размер данных ТС
 		msg = Hex2Ascii(msgsize / 2) + msg; // Размер пакета
 		msg = "?B" + msg; // Заголовок
