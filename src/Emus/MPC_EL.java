@@ -253,9 +253,7 @@ public class MPC_EL extends EmusDeff {
 	}
 
 	private String Hex2Ascii(int hex) {
-		while (hex > 0xFFFF) {
-			hex /= 2;
-		}
+		hex &= 0xFFFF;
 		String out = "";
 		int a = hex;
 		for (int i = 0; i < 2; i++) {
@@ -277,13 +275,15 @@ public class MPC_EL extends EmusDeff {
 		String msgbits = "";
 		String data;
 		String blok = "";
+		int k = 0;
 		// Забиваем данные
 		for (Controller[] contrs : deviseVector) {
 			ObjectInHTML i = (ObjectInHTML) contrs[0];
 			if(i.typeNode == null) sizeTC += i.Del;
+			k += i.Del;
 			data = i.toMPC();
 			do {
-				blok = data.substring(0, 1) + blok;
+				blok += data.substring(0, 1);
 				data = data.substring(1, data.length());
 				if (blok.length() == 8) {
 					msgbits += blok;
@@ -292,14 +292,17 @@ public class MPC_EL extends EmusDeff {
 			} while (data.length() > 0);
 			// msgbits += i.toMPC();
 		}
+		int dd = msgbits.length();
 		while(!blok.isEmpty()) {
-			blok = blok + "0";
+			k ++;
+			blok += "0";
 			if (blok.length() == 8) {
 				msgbits += blok;
 				blok = "";
 			}
 		}
-		for (int n = 0; n < msgbits.length() - 8; n += 8) {
+		int dddd = msgbits.length();
+		for (int n = 0; n < msgbits.length(); n += 8) {
 			int val = Integer.valueOf(msgbits.substring(n, n + 8), 2);
 			if (val > 15) {
 				msg += Integer.toHexString(val);
@@ -312,8 +315,8 @@ public class MPC_EL extends EmusDeff {
 		String crc = getCRC(msg);
 		msg += crc;
 
-		System.out.print("?B sizeTC(" + sizeTC + ") size(" + msgsize / 2 + ") crc(" + crc + ") -> ");
-		dispatchEvent(new EmusEvent("?B sizeTC(" + sizeTC + ") size(" + msgsize / 2 + ") crc(" + crc + ") -> ", EmusEvent.Type.PRINT));
+		System.out.print("?B size(" + msgsize / 2 + ") sizeTC(" + sizeTC + ") crc(" + crc + ") -> ");
+		dispatchEvent(new EmusEvent("?B size(" + msgsize / 2 + ") sizeTC(" + sizeTC + ") crc(" + crc + ") -> ", EmusEvent.Type.PRINT));
 		msg = Hex2Ascii(sizeTC) + msg; // Размер данных ТС
 		msg = Hex2Ascii(msgsize / 2) + msg; // Размер пакета
 		msg = "?B" + msg; // Заголовок
