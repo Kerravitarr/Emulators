@@ -25,7 +25,7 @@ import javax.swing.JFileChooser;
 import javax.swing.JMenuItem;
 import javax.swing.WindowConstants;
 
-import Emus.ATIS;
+import Emus.SKDP;
 import Emus.BARS;
 import Emus.BISI;
 import Emus.BSVU;
@@ -40,8 +40,10 @@ import Emus.MPC_MZ_F;
 import Emus.ORION;
 import Emus.OVEN;
 import Emus.Power_Wizard;
+import Emus.REPEATER;
 import Emus.UKTRC;
 import Emus.VRT;
+import Emus.ZTE;
 import MyMatch.EmusDeff;
 import MyMatch.EmusEvent;
 import MyMatch.EmusListener;
@@ -290,8 +292,10 @@ public class MainScreen extends javax.swing.JFrame implements EmusListener {
 		newEmulator(i++,"ИМСИ");
 		newEmulator(i++,"ОВЕН");
 		newEmulator(i++,"БСВУ");
-		//newEmulator(i++,"СКДП"); - Удалён, так как у них есть свой эмулятор
+		newEmulator(i++,"СКДП");// - Удалён, так как у них есть свой эмулятор
 		newEmulator(i++,"МПЦ ЭЛ");
+		newEmulator(i++,"ZTE");
+		newEmulator(i++,"Повторитель");
 		
 		jMenuBar1.add(jMenu1);
 
@@ -327,23 +331,25 @@ public class MainScreen extends javax.swing.JFrame implements EmusListener {
 		java.awt.EventQueue.invokeLater(() -> {
 			if (!driverWindow_hash.containsKey(name)) {
 				switch (name) {
-				case "МПЦ ЭЛ" -> driverWindow_hash.put(name, new MPC_EL(Se));
-				case "СКДП" -> driverWindow_hash.put(name, new ATIS(Se));
-				case "БСВУ" -> driverWindow_hash.put(name, new BSVU(Se));
-				case "ОВЕН" -> driverWindow_hash.put(name, new OVEN(Se));
-				case "ИМСИ" -> driverWindow_hash.put(name, new IMSI(Se));
-				case "Сквозной канал" -> driverWindow_hash.put(name, new EndToEnd(Se));
-				case "Эмулятор PowerWizard" -> driverWindow_hash.put(name, new Power_Wizard(Se));
-				case "Эмулятор УКТРЦ" -> driverWindow_hash.put(name, new UKTRC(Se));
-				case "МПЦ МЗ Ф" -> driverWindow_hash.put(name, new MPC_MZ_F(Se));
-				case "ИСИ" -> driverWindow_hash.put(name, new ISI(Se));
-				case "БИСИ" -> driverWindow_hash.put(name, new BISI(Se));
-				case "I2C" -> driverWindow_hash.put(name, new I2C(Se));
-				case "БАРС" -> driverWindow_hash.put(name, new BARS(Se));
-				case "ИНС" -> driverWindow_hash.put(name, new INC(Se));
-				case "МПАБ" -> driverWindow_hash.put(name, new MPAB(Se));
-				case "ОРИОН" -> driverWindow_hash.put(name, new ORION(Se));
-				case "VRT" -> driverWindow_hash.put(name, new VRT(Se));
+				case "Повторитель" : driverWindow_hash.put(name, new REPEATER(Se));break;
+				case "ZTE" : driverWindow_hash.put(name, new ZTE(Se));break;
+				case "МПЦ ЭЛ" : driverWindow_hash.put(name, new MPC_EL(Se)); break;
+				case "СКДП" : driverWindow_hash.put(name, new SKDP(Se));break;
+				case "БСВУ" : driverWindow_hash.put(name, new BSVU(Se));break;
+				case "ОВЕН" : driverWindow_hash.put(name, new OVEN(Se));break;
+				case "ИМСИ" : driverWindow_hash.put(name, new IMSI(Se));break;
+				case "Сквозной канал" : driverWindow_hash.put(name, new EndToEnd(Se));break;
+				case "Эмулятор PowerWizard" : driverWindow_hash.put(name, new Power_Wizard(Se));break;
+				case "Эмулятор УКТРЦ" : driverWindow_hash.put(name, new UKTRC(Se));break;
+				case "МПЦ МЗ Ф" : driverWindow_hash.put(name, new MPC_MZ_F(Se));break;
+				case "ИСИ" : driverWindow_hash.put(name, new ISI(Se));break;
+				case "БИСИ" : driverWindow_hash.put(name, new BISI(Se));break;
+				case "I2C" : driverWindow_hash.put(name, new I2C(Se));break;
+				case "БАРС" : driverWindow_hash.put(name, new BARS(Se));break;
+				case "ИНС" : driverWindow_hash.put(name, new INC(Se));break;
+				case "МПАБ" : driverWindow_hash.put(name, new MPAB(Se));break;
+				case "ОРИОН" : driverWindow_hash.put(name, new ORION(Se));break;
+				case "VRT" : driverWindow_hash.put(name, new VRT(Se));break;
 				}
 				driverWindow_hash.get(name).setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 				driverWindow_hash.get(name).addListener(this);
@@ -361,54 +367,6 @@ public class MainScreen extends javax.swing.JFrame implements EmusListener {
 	private void jMenu4MouseClicked(java.awt.event.MouseEvent evt) {
 		jMenuItem2ActionPerformed(null);
 		jMenu4.setSelected(false);
-	}
-	
-	private void jMenuActionPerformed(java.awt.event.ActionEvent evt) {
-		int num2 = -1;
-		switch (evt.getActionCommand()) {
-			// @formatter:off
-			case "БСВУ": num2++;
-			case "ОВЕН": num2++;
-			case "ИМСИ": num2++;
-			case "Сквозной канал": num2++;
-			case "Эмулятор PowerWizard": num2++;
-			case "Эмулятор УКТРЦ": num2++;
-			case "МПЦ МЗ Ф": num2++;
-			case "ИСИ": num2++;
-			case "БИСИ": num2++;
-			case "I2C": num2++;
-			case "БАРС": num2++;
-			case "ИНС": num2++;
-			case "МПАБ": num2++;
-			case "ОРИОН": num2++;
-			case "VRT": num2++;
-			// @formatter:on
-		}
-		final int num = num2;
-		java.awt.EventQueue.invokeLater(() -> {
-			if (driverWindow.get(num) == null) {
-				switch (num) {
-					case 14 -> driverWindow.add(num, new BSVU(Se));
-					case 13 -> driverWindow.add(num, new OVEN(Se));
-					case 12 -> driverWindow.add(num, new IMSI(Se));
-					case 11 -> driverWindow.add(num, new EndToEnd(Se));
-					case 10 -> driverWindow.add(num, new Power_Wizard(Se));
-					case 9 -> driverWindow.add(num, new UKTRC(Se));
-					case 8 -> driverWindow.add(num, new MPC_MZ_F(Se));
-					case 7 -> driverWindow.add(num, new ISI(Se));
-					case 6 -> driverWindow.add(num, new BISI(Se));
-					case 5 -> driverWindow.add(num, new I2C(Se));
-					case 4 -> driverWindow.add(num, new BARS(Se));
-					case 3 -> driverWindow.add(num, new INC(Se));
-					case 2 -> driverWindow.add(num, new MPAB(Se));
-					case 1 -> driverWindow.add(num, new ORION(Se));
-					case 0 -> driverWindow.add(num, new VRT(Se));
-				}
-				driverWindow.get(num).setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-				driverWindow.get(num).addListener(this);
-			}
-			driverWindow.get(num).setVisible(true);
-		});
 	}
 
 	private void jMenuItem1ActionPerformed(java.awt.event.ActionEvent evt) {

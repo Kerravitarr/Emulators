@@ -105,9 +105,9 @@ public abstract class EmusDeff extends javax.swing.JFrame {
 		RND, STEP, UNDEFENDED, NULL, RESTART, CONST
 	}
 	
-	
+
+    private static DefaultListModel<String> items = new DefaultListModel<String>();
 	protected class FastList extends JList<String>{
-	    private static DefaultListModel<String> items = new DefaultListModel<String>();
 	    public FastList() {
 	    	super(items);
 	    }
@@ -150,7 +150,7 @@ public abstract class EmusDeff extends javax.swing.JFrame {
 
 	protected javax.swing.JMenu Menu;
 	private javax.swing.JMenu MenuPort;
-
+	/**Шапка меню*/
 	protected javax.swing.JMenuBar MenuRaw;
 	/** Непосредственно область, в которой происходит отображение всех устрйоств */
 	protected FastList TextList;
@@ -162,7 +162,7 @@ public abstract class EmusDeff extends javax.swing.JFrame {
 
 	private int Period;
 	private boolean isBlok = false;
-
+	/**Количество контроллеров - строк!*/
 	protected int numKontr = 0;
 	protected int startContr = 1;
 	/** Число контроллеров в одном устройстве */
@@ -253,8 +253,7 @@ public abstract class EmusDeff extends javax.swing.JFrame {
 	 * @param contrPerDev - Сколько контроллеров содержится в одном девайсе (у них один адрес)
 	 * @param contrPerLine - Сколько контроллеров расположить на линии
 	 */
-	final protected void addContr(int numDev, int startContr, int contrPerDev,
-			int contrPerLine) {
+	final protected void addContr(int numDev, int startContr, int contrPerDev, int contrPerLine) {
 		numKontr = numDev;
 		numContrInDev = contrPerDev;
 		this.contrPerLine = contrPerLine;
@@ -619,7 +618,10 @@ public abstract class EmusDeff extends javax.swing.JFrame {
 	 */
 	protected abstract Controller getController(int numDev, int numContrInDev);
 	
-	final private void regenerateController() {
+	/**
+	 * Перезагружает контроллеры, то есть 
+	 */
+	final protected void regenerateController() {
 		deviseVector.removeAllElements();
 		for (int i = 0; i < numKontr; i++) {
 			Controller[] a = new Controller[numContrInDev];
@@ -717,8 +719,8 @@ public abstract class EmusDeff extends javax.swing.JFrame {
 					width = fm.stringWidth(max);
 					height = list.length * 20;
 				}
-				d.height = height + 70;
-				d.width = width + 30;
+				d.height = height + 100;
+				d.width = width + 60;
 				
 				if(d.width < 200)
 					d.width = 200;

@@ -33,9 +33,9 @@ public class BSVU extends EmusDeff {
 		}
 		int adr = array_h[0];
 		int[] crc = MyMatch.calculateCRC(array_h, 0, array_h.length - 2);
-		if((byte)crc[0] != (byte)array_h[array_h.length - 2] || (byte)crc[1] != (byte)array_h[array_h.length - 1]) {
-			println("Не совпал CRC! Пришло 0х" + toHexStrWithZero(array_h[array_h.length - 1], 2)
-					+ " 0х" + toHexStrWithZero(array_h[array_h.length - 2], 2)
+		if((byte)crc[1] != (byte)array_h[array_h.length - 1] || (byte)crc[0] != (byte)array_h[array_h.length - 2]) {
+			println("Не совпал CRC! Пришло 0х" + toHexStrWithZero(array_h[array_h.length - 2], 2)
+					+ " 0х" + toHexStrWithZero(array_h[array_h.length - 1], 2)
 					+ ", а ожидалось 0х" + toHexStrWithZero(crc[1], 2)
 					+ " 0х" + toHexStrWithZero(crc[0], 2));
 			println("Пакет: " + string_H);

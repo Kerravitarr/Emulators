@@ -15,6 +15,8 @@ import MyMatch.Setings;
 public class INC extends EmusDeff {
 
 	private class Controller extends EmusDeff.Controller {
+		private static DecimalFormat	UPf					= new DecimalFormat("+000.000");
+		private static DecimalFormat	Zf					= new DecimalFormat("+0000.000");
 
 		public Controller() {
 			super(10, "ИНС");
@@ -29,11 +31,18 @@ public class INC extends EmusDeff {
 			}
 		}
 
-		protected String getStrToPort() {
+		protected String getUP() {
 			if (mode == Mode.UNDEFENDED) {
-				return "XX_XXX";
+				return "XXX_XXX";
 			} else {
-				return df2.format(val / 1_000.0);
+				return UPf.format(val / 1_000.0);
+			}
+		}
+		protected String getZ() {
+			if (mode == Mode.UNDEFENDED) {
+				return "XXX_XXX";
+			} else {
+				return Zf.format(val / 1_000.0);
 			}
 		}
 	}
@@ -49,12 +58,12 @@ public class INC extends EmusDeff {
 
 	public INC(Setings Se) {
 		super(Se, "INC", 1000);
-		addContr(1, 0, 16, 8);
+		addContr(1, 0, 10, 8);
 	}
 
 	@Override
 	protected void firstStep() {
-		TextList.removeAll();
+		/*TextList.removeAll();
 		deviseVector.removeAllElements();
 		for (int i = 0; i < numKontr; i++) {
 			String num = "";
@@ -82,12 +91,11 @@ public class INC extends EmusDeff {
 			}
 			deviseVector.add(a);
 			TextList.add(name);
-		}
+		}*/
 	}
 
 	@Override
 	protected Controller getController(int numContr, int numPart) {
-	
 		return new Controller();
 	}
 
@@ -98,17 +106,26 @@ public class INC extends EmusDeff {
 		String data = "";
 		int num = Integer.parseInt(req[1] + req[2]);
 		String Fun = req[3];
-		if (req[0].contains("$") & num <= numKontr) {
+		if (req[0].contains("$") & num - startContr < numKontr) {
 			println("Контроллер = " + num + " приказ = " + Fun);
 			switch (Fun) {
 				case "U":
-					data = ">" + String.format("%02X", num) + ((Controller) deviseVector.get(num - 1)[0]).getStrToPort();
+					data = ">" + String.format("%02X", num);
+					for(var i : getDevise(num)) {
+						data += ((Controller)i).getUP();
+					}
 					break;
 				case "P":
 					data = ">" + String.format("%02X", num);
+					for(var i : getDevise(num)) {
+						data += ((Controller)i).getUP();
+					}
 					break;
 				case "Z":
 					data = ">" + String.format("%02X", num);
+					for(var i : getDevise(num)) {
+						data += ((Controller)i).getZ();
+					}
 					break;
 				case "F":
 					println("Приказ установить частоту = " + Integer.parseInt(req[4] + req[5]) + "Гц");
@@ -124,12 +141,11 @@ public class INC extends EmusDeff {
 					break;
 			}
 			req = data.split("");
-			int crc = 0;
+			byte crc = 0;
 			for (String element : req) {
 				crc += element.charAt(0);
 			}
-
-			data += (crc < 16 ? "0" : "") + Integer.toHexString(crc);
+			data += ((((int)crc) & 0xFF) < 16 ? "0" : "") + Integer.toHexString(((int)crc) & 0xFF);
 			data += '\0';
 			writeString(data);
 			println("Out " + data);

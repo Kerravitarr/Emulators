@@ -16,23 +16,8 @@ import MyMatch.Setings;
 public class ORION extends EmusDeff {
 
 	// Variables declaration - do not modify//GEN-BEGIN:variables
-	private javax.swing.JMenuItem				InstalZero;
-
-	private javax.swing.JMenuItem				Reset;
-
-	private javax.swing.JMenu					jMenu2;
-
-	private javax.swing.JMenu					jMenu4;
-
 	private javax.swing.JMenuItem				jMenuItem1;
-
-	private javax.swing.JMenuItem				jMenuItem2;
-
-	private javax.swing.JMenuItem				jMenuItem3;
-
 	private javax.swing.JRadioButtonMenuItem	jMenuItem4;
-
-	private javax.swing.JMenuItem				jMenuItem5;
 
 	private javax.swing.JRadioButtonMenuItem	jMenuItem6;
 	private boolean								isRandom	= false;
@@ -70,7 +55,7 @@ public class ORION extends EmusDeff {
 	@Override
 	protected void msgIn(String data_S, String string_H) {
 
-		println("In" + string_H);
+		println("In " + string_H);
 
 		String req[] = string_H.split(" ");
 		int num = Integer.parseInt(req[0]);
@@ -116,17 +101,9 @@ public class ORION extends EmusDeff {
 	// <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
 	@Override
 	protected void newInitComponents() {
-
 		jMenuItem1 = new javax.swing.JMenuItem();
-		jMenu2 = new javax.swing.JMenu();
 		jMenuItem4 = new javax.swing.JRadioButtonMenuItem();
-		jMenuItem5 = new javax.swing.JMenuItem();
 		jMenuItem6 = new javax.swing.JRadioButtonMenuItem();
-		Reset = new javax.swing.JMenuItem();
-		InstalZero = new javax.swing.JMenuItem();
-		jMenuItem2 = new javax.swing.JMenuItem();
-		jMenu4 = new javax.swing.JMenu();
-		jMenuItem3 = new javax.swing.JMenuItem();
 
 		setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 		addWindowListener(new java.awt.event.WindowAdapter() {

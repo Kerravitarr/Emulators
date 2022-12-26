@@ -217,11 +217,11 @@ public class IMSI extends EmusDeff {
 				+ ", код команды 0x" + toHexStrWithZero(code, 2));
 		if (isExist(adr) || adr == 0x00) {
 			switch (code) {
-				case 0x20 -> standartRet(adr);
-				case 0x22 -> setAdrOnNumber(array_h);
-				case 0x26 -> lastVal(adr);
-				case 0x27 -> setNorm(adr,array_h);
-				default -> println("Мы с таким кодом не работаем 0х" + toHexStrWithZero(code, 2));
+				case 0x20: standartRet(adr); break;
+				case 0x22: setAdrOnNumber(array_h); break;
+				case 0x26: lastVal(adr); break;
+				case 0x27: setNorm(adr,array_h); break;
+				default: println("Мы с таким кодом не работаем 0х" + toHexStrWithZero(code, 2)); break;
 			}
 		}
 	}
